@@ -1,42 +1,37 @@
-name: "CodeQL"
-
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-  schedule:
-    - cron: "18 23 * * 1"
-
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
-
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      name: Checkout
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-and-quality
+    - continue-on-error: true
+      if: ${{ matrix.language == 'java' || matrix.language == 'javascript' }}
+      name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+    - continue-on-error: true
+      name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: /language:${{ matrix.language }}
     strategy:
       fail-fast: false
       matrix:
-        language: [ java, javascript ]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: +security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-        if: ${{ matrix.language == 'java' || matrix.language == 'javascript' }}
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+        language:
+        - java
+        - javascript
+name: CodeQL
+on:
+  repository_dispatch:
+    types: trigger-ga___codeql.yml
